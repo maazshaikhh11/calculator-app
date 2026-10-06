@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator App</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      padding: 20px;
+    }
+
+    .calculator {
+      width: 350px;
+      max-width: 100%;
+      background: #1e1e2f;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .display {
+      width: 100%;
+      height: 100px;
+      background: #11111b;
+      color: white;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+
+    .previous-operand {
+      color: #999;
+      font-size: 18px;
+      min-height: 25px;
+      word-break: break-all;
+    }
+
+    .current-operand {
+      font-size: 40px;
+      font-weight: bold;
+      word-break: break-all;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      height: 65px;
+      border: none;
+      border-radius: 15px;
+      font-size: 22px;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+      background: #2d2d44;
+      transition: 0.15s ease;
+    }
+
+    button:hover {
+      background: #3c3c58;
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .operator {
+      background: #ff9500;
+    }
+
+    .operator:hover {
+      background: #e68600;
+    }
+
+    .equals {
+      background: #22c55e;
+    }
+
+    .equals:hover {
+      background: #16a34a;
+    }
+
+    .clear {
+      background: #ef4444;
+    }
+
+    .clear:hover {
+      background: #dc2626;
+    }
+
+    .delete {
+      background: #64748b;
+    }
+
+    .delete:hover {
+      background: #475569;
+    }
+
+    .zero {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 400px) {
+      .calculator {
+        padding: 15px;
+      }
+
+      button {
+        height: 58px;
+        font-size: 20px;
+      }
+
+      .current-operand {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="calculator">
+
+    <div class="display">
+      <div class="previous-operand" id="previousOperand"></div>
+      <div class="current-operand" id="currentOperand">0</div>
+    </div>
+
+    <div class="buttons">
+
+      <button class="clear" onclick="clearCalculator()">AC</button>
+      <button class="delete" onclick="deleteNumber()">DEL</button>
+      <button class="operator" onclick="chooseOperation('%')">%</button>
+      <button class="operator" onclick="chooseOperation('÷')">÷</button>
+
+      <button onclick="appendNumber('7')">7</button>
+      <button onclick="appendNumber('8')">8</button>
+      <button onclick="appendNumber('9')">9</button>
+      <button class="operator" onclick="chooseOperation('×')">×</button>
+
+      <button onclick="appendNumber('4')">4</button>
+      <button onclick="appendNumber('5')">5</button>
+      <button onclick="appendNumber('6')">6</button>
+      <button class="operator" onclick="chooseOperation('-')">−</button>
+
+      <button onclick="appendNumber('1')">1</button>
+      <button onclick="appendNumber('2')">2</button>
+      <button onclick="appendNumber('3')">3</button>
+      <button class="operator" onclick="chooseOperation('+')">+</button>
+
+      <button class="zero" onclick="appendNumber('0')">0</button>
+      <button onclick="appendNumber('.')">.</button>
+      <button class="equals" onclick="calculate()">=</button>
+
+    </div>
+  </div>
+
+
+  <script>
+    let currentOperand = "";
+    let previousOperand = "";
+    let operation = undefined;
+
+    const currentDisplay = document.getElementById("currentOperand");
+    const previousDisplay = document.getElementById("previousOperand");
+
+
+    // Update calculator display
+    function updateDisplay() {
+      currentDisplay.innerText = currentOperand || "0";
+
+      if (operation != null) {
+        previousDisplay.innerText = `${previousOperand} ${operation}`;
+      } else {
+        previousDisplay.innerText = previousOperand;
+      }
+    }
+
+
+    // Add number
+    function appendNumber(number) {
+
+      // Prevent multiple decimal points
+      if (number === "." && currentOperand.includes(".")) {
+        return;
+      }
+
+      // Prevent unnecessary leading zeros
+      if (currentOperand === "0" && number !== ".") {
+        currentOperand = number;
+      } else {
+        currentOperand += number;
+      }
+
+      updateDisplay();
+    }
+
+
+    // Select operation
+    function chooseOperation(selectedOperation) {
+
+      // If no current number, don't do anything
+      if (currentOperand === "" && previousOperand === "") {
+        return;
+      }
+
+      // If an operation already exists, calculate first
+      if (currentOperand === "" && previousOperand !== "") {
+        operation = selectedOperation;
+        updateDisplay();
+        return;
+      }
+
+      if (previousOperand !== "") {
+        calculate();
+      }
+
+      operation = selectedOperation;
+      previousOperand = currentOperand;
+      currentOperand = "";
+
+      updateDisplay();
+    }
+
+
+    // Calculate result
+    function calculate() {
+
+      if (previousOperand === "" || currentOperand === "" || !operation) {
+        return;
+      }
+
+      const previous = parseFloat(previousOperand);
+      const current = parseFloat(currentOperand);
+
+      let result;
+
+      switch (operation) {
+
+        case "+":
+          result = previous + current;
+          break;
+
+        case "-":
+          result = previous - current;
+          break;
+
+        case "×":
+          result = previous * current;
+          break;
+
+        case "÷":
+          if (current === 0) {
+            alert("Cannot divide by zero!");
+            clearCalculator();
+            return;
+          }
+
+          result = previous / current;
+          break;
+
+        case "%":
+          result = previous % current;
+          break;
+
+        default:
+          return;
+      }
+
+      // Remove floating-point precision errors
+      result = parseFloat(result.toFixed(10));
+
+      currentOperand = result.toString();
+      previousOperand = "";
+      operation = undefined;
+
+      updateDisplay();
+    }
+
+
+    // Clear calculator
+    function clearCalculator() {
+      currentOperand = "";
+      previousOperand = "";
+      operation = undefined;
+
+      updateDisplay();
+    }
+
+
+    // Delete last number
+    function deleteNumber() {
+      currentOperand = currentOperand.slice(0, -1);
+      updateDisplay();
+    }
+
+
+    // Keyboard support
+    document.addEventListener("keydown", function(event) {
+
+      const key = event.key;
+
+      // Numbers
+      if (key >= "0" && key <= "9") {
+        appendNumber(key);
+      }
+
+      // Decimal
+      if (key === ".") {
+        appendNumber(".");
+      }
+
+      // Operations
+      if (key === "+") {
+        chooseOperation("+");
+      }
+
+      if (key === "-") {
+        chooseOperation("-");
+      }
+
+      if (key === "*") {
+        chooseOperation("×");
+      }
+
+      if (key === "/") {
+        event.preventDefault();
+        chooseOperation("÷");
+      }
+
+      if (key === "%") {
+        chooseOperation("%");
+      }
+
+      // Enter or =
+      if (key === "Enter" || key === "=") {
+        calculate();
+      }
+
+      // Backspace
+      if (key === "Backspace") {
+        deleteNumber();
+      }
+
+      // Escape
+      if (key === "Escape") {
+        clearCalculator();
+      }
+    });
+
+
+    // Initial display
+    updateDisplay();
+  </script>
+
+</body>
+</html>
